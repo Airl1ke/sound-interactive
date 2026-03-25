@@ -1,0 +1,16 @@
+{
+  "name": "Ride Through the Fields",
+  "short_name": "Ride The Fields",
+  "start_url": "https://soundinteractive.pages.dev/bike-ride-mixer.html",
+  "display": "fullscreen",
+  "background_color": "#E8C832",
+  "theme_color": "#E8C832",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23E8C832'/><text y='140' x='20' font-size='120' font-family='serif' fill='%231AA899'>~</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

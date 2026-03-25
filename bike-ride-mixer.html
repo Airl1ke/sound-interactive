@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ride The Fields">
+<meta name="theme-color" content="#E8C832">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ride Through the Fields</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --yellow: #E8C832;
+    --yellow-deep: #C4A020;
+    --teal: #1AA899;
+    --teal-light: #4DCFC3;
+    --teal-dark: #0D6B63;
+    --ink: #1A1208;
+    --cream: #FAF3DC;
+    --rust: #B84A1E;
+    --rust-light: #E07048;
+  }
+
+  body {
+    background: var(--yellow);
+    color: var(--ink);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  .header {
+    padding: 3rem 4rem 1.5rem;
+    position: relative;
+  }
+
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 10vw, 9rem);
+    line-height: 0.88;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+
+  .header h1 span { color: var(--teal); }
+
+  .header .subtitle {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-top: 1rem;
+    font-weight: 700;
+  }
+
+  .teal-blob {
+    position: absolute;
+    top: 2rem; right: 3rem;
+    width: 120px; height: 120px;
+    background: var(--teal);
+    border-radius: 50%;
+    opacity: 0.85;
+  }
+  .teal-blob-2 {
+    position: absolute;
+    top: 5.5rem; right: 8rem;
+    width: 75px; height: 75px;
+    background: var(--teal-light);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  .main {
+    padding: 0 2.5rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .speed-panel {
+    background: var(--ink);
+    border-radius: 4px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .speed-panel::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    border: 3px solid var(--teal);
+    opacity: 0.2;
+  }
+
+  .speed-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    color: var(--yellow);
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .speed-value {
+    font-size: 3rem;
+    color: var(--teal-light);
+    line-height: 1;
+  }
+
+  .speed-desc {
+    font-size: 0.68rem;
+    color: var(--yellow-deep);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+    min-height: 1.2em;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(to right, var(--teal) var(--pct, 50%), rgba(255,255,255,0.15) var(--pct, 50%));
+    border-radius: 3px;
+    outline: none;
+    margin: 1rem 0 0.5rem;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--yellow);
+    border: 3px solid var(--teal);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .speed-markers {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tracks-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    color: var(--ink);
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .tracks-title::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: var(--ink);
+    opacity: 0.2;
+  }
+
+  .tracks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .track-card {
+    background: var(--cream);
+    border-radius: 4px;
+    padding: 1.25rem;
+    border: 2.5px solid transparent;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .track-card.active {
+    border-color: var(--teal);
+    background: #fff;
+  }
+
+  .track-card.playing::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--teal);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .track-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  .track-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--yellow);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid var(--yellow-deep);
+    flex-shrink: 0;
+    color: var(--ink);
+  }
+
+  .track-card.active .track-icon {
+    background: var(--teal);
+    border-color: var(--teal-dark);
+    color: white;
+  }
+
+  .track-toggle {
+    width: 40px; height: 22px;
+    border-radius: 11px;
+    background: rgba(0,0,0,0.15);
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .track-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+  }
+
+  .track-card.active .track-toggle { background: var(--teal); }
+  .track-card.active .track-toggle::after { transform: translateX(18px); }
+
+  .track-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.1rem;
+    color: var(--ink);
+  }
+
+  .track-type {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--teal-dark);
+    opacity: 0.7;
+  }
+
+  .track-card.active .track-type { opacity: 1; }
+
+  .track-status {
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.35rem;
+    color: rgba(0,0,0,0.3);
+  }
+
+  .track-card.loaded .track-status { color: var(--teal-dark); }
+
+  .vol-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    opacity: 0.35;
+    transition: opacity 0.2s;
+  }
+
+  .track-card.active .vol-row { opacity: 1; }
+
+  .vol-row label {
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--teal-dark);
+    white-space: nowrap;
+  }
+
+  .vol-row input[type=range] {
+    height: 4px;
+    margin: 0;
+    background: linear-gradient(to right, var(--teal) var(--pct,70%), rgba(0,0,0,0.15) var(--pct,70%));
+  }
+
+  .vol-row input[type=range]::-webkit-slider-thumb {
+    width: 14px; height: 14px;
+    border: 2px solid var(--teal);
+  }
+
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .waveform-card {
+    background: var(--ink);
+    border-radius: 4px;
+    padding: 1.5rem;
+  }
+
+  .waveform-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--yellow);
+    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+  }
+
+  #waveform-canvas {
+    width: 100%;
+    height: 70px;
+    display: block;
+  }
+
+  .active-sounds {
+    background: var(--ink);
+    border-radius: 4px;
+    padding: 1.5rem;
+  }
+
+  .active-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--yellow);
+    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+  }
+
+  .active-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .active-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: color 0.2s;
+  }
+
+  .active-item.on { color: var(--teal-light); }
+
+  .active-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .active-item.on .active-dot { background: var(--teal); }
+
+  .riding-indicator {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-top: 0.75rem;
+  }
+  .riding-indicator.show { display: flex; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .riding-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: bounce 0.6s ease-in-out infinite;
+  }
+  .riding-dot:nth-child(2) { animation-delay: 0.15s; }
+  .riding-dot:nth-child(3) { animation-delay: 0.3s; }
+
+  .play-btn {
+    width: 100%;
+    background: var(--teal);
+    color: var(--ink);
+    border: none;
+    border-radius: 4px;
+    padding: 1.1rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .play-btn:hover { background: var(--teal-light); }
+  .play-btn:active { transform: scale(0.98); }
+  .play-btn.playing { background: var(--rust); color: var(--cream); }
+  .play-btn.playing:hover { background: var(--rust-light); }
+
+  .instructions {
+    background: var(--teal);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    font-size: 0.65rem;
+    line-height: 1.8;
+    letter-spacing: 0.06em;
+    color: var(--teal-dark);
+    text-transform: uppercase;
+  }
+
+  .instructions strong { color: var(--ink); font-weight: 700; }
+
+  .load-guide {
+    background: var(--cream);
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    font-size: 0.64rem;
+    line-height: 2;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+  }
+
+  .load-guide strong { font-weight: 700; }
+
+  .load-guide code {
+    background: rgba(0,0,0,0.09);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+  }
+
+  @media (max-width: 768px) {
+    .header { padding: 2rem 1.5rem 1rem; }
+    .main { grid-template-columns: 1fr; padding: 0 1.5rem 3rem; }
+    .tracks-grid { grid-template-columns: 1fr; }
+    .teal-blob { width: 70px; height: 70px; top: 1rem; right: 1.5rem; }
+    .teal-blob-2 { display: none; }
+  }
+
+  .home-btn {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    z-index: 1000;
+    background: var(--ink);
+    color: var(--yellow);
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background 0.2s;
+  }
+  .home-btn:hover { background: var(--teal-dark); }
+  .home-btn::before { content: '\2190'; font-size: 1rem; }
+
+  #idle-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,8,0.85);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  #idle-overlay.show { display: flex; }
+  #idle-overlay p {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--yellow);
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+  #idle-overlay span {
+    font-size: 4rem;
+    color: var(--teal-light);
+    line-height: 1;
+  }
+</style>
+</head>
+<body>
+
+
+<a href="index.html" class="home-btn">Menu</a>
+
+<div id="idle-overlay">
+  <p>Returning to menu...</p>
+  <span id="idle-countdown">5</span>
+</div>
+
+<div class="header">
+  <div class="teal-blob"></div>
+  <div class="teal-blob-2"></div>
+  <h1>Ride<br>Through<br><span>The Fields</span></h1>
+  <p class="subtitle">Compose your journey &mdash; shape the sound of a ride</p>
+  <div class="riding-indicator" id="riding-indicator">
+    <div class="riding-dot"></div>
+    <div class="riding-dot"></div>
+    <div class="riding-dot"></div>
+    <span id="speed-riding-text">Cycling at steady pace</span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="left-col">
+
+    <div class="speed-panel">
+      <div class="speed-label">
+        Speed of the ride
+        <span class="speed-value" id="speed-display">3</span>
+      </div>
+      <div class="speed-desc" id="speed-desc">A steady rhythm, the world blurring gently</div>
+      <input type="range" id="speed-slider" min="1" max="5" step="1" value="3" style="--pct:50%">
+      <div class="speed-markers">
+        <span>Slow drift</span>
+        <span>Steady roll</span>
+        <span>Full sprint</span>
+      </div>
+    </div>
+
+    <div class="tracks-title">Sound tracks</div>
+    <div class="tracks-grid" id="tracks-grid"></div>
+
+  </div>
+
+  <div class="right-panel">
+
+    <div class="waveform-card">
+      <div class="waveform-title">Live mix</div>
+      <canvas id="waveform-canvas"></canvas>
+    </div>
+
+    <div class="active-sounds">
+      <div class="active-title">In your mix</div>
+      <ul class="active-list" id="active-list"></ul>
+    </div>
+
+    <button class="play-btn" id="play-btn">Start the ride</button>
+
+    <div class="instructions">
+      <strong>How to compose:</strong><br>
+      Toggle tracks on/off &rarr; set each volume &rarr;
+      choose your speed &rarr; press <strong>Start the ride</strong>.
+    </div>
+
+    <div class="load-guide">
+      <strong>Setup — place these files in the same folder as this HTML:</strong><br>
+      <code>wind.mp3</code> &nbsp; <code>leaves.mp3</code> &nbsp; <code>heartbeat.mp3</code> &nbsp; <code>birds.mp3</code><br>
+      <code>gravel.mp3</code> &nbsp; <code>breath.mp3</code> &nbsp; <code>chain.mp3</code> &nbsp; <code>ambience.mp3</code><br><br>
+      Open in <strong>Chrome or Edge</strong>. Each card shows <em>Ready</em> when its file is found.<br><br>
+      <strong>Folder structure:</strong><br>
+      <code>my-installation/</code><br>
+      &nbsp;&nbsp;<code>bike-ride-mixer.html</code><br>
+      &nbsp;&nbsp;<code>sounds/</code><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<code>wind.mp3</code> &nbsp;<code>birds.mp3</code> &nbsp;etc.
+    </div>
+
+  </div>
+</div>
+
+<script>
+const TRACKS = [
+  { id: 'wind',      name: 'Wind',        type: 'Natural',    icon: 'WI' },
+  { id: 'leaves',    name: 'Rustling',    type: 'Natural',    icon: 'LE' },
+  { id: 'heartbeat', name: 'Heartbeat',   type: 'Body',       icon: 'HB' },
+  { id: 'birds',     name: 'Birds',       type: 'Natural',    icon: 'BI' },
+  { id: 'gravel',    name: 'Gravel',      type: 'Terrain',    icon: 'GR' },
+  { id: 'breath',    name: 'Breathing',   type: 'Body',       icon: 'BR' },
+  { id: 'chain',     name: 'Chain Click', type: 'Mechanical', icon: 'CH' },
+  { id: 'ambience',  name: 'Ambience',    type: 'Natural',    icon: 'AM' },
+];
+
+const SPEED_DESCS = [
+  '',
+  'A slow, dreamy drift — almost floating',
+  'A gentle, unhurried ride through open fields',
+  'A steady rhythm, the world blurring gently',
+  'Pushing hard, pulse rising, wind roaring',
+  'Full sprint — heartbeat and wind, nothing else',
+];
+
+const RIDING_LABELS = ['', 'Drifting slowly...', 'Cycling at steady pace', 'Picking up speed', 'Riding hard', 'Full sprint!'];
+
+// playbackRate map: speed 1-5
+const PLAYBACK_RATES = [null, 0.6, 0.8, 1.0, 1.3, 1.6];
+
+// These tracks speed up but pitch is locked (preservesPitch = true)
+const PITCH_PRESERVE_IDS = new Set(['leaves', 'birds', 'ambience', 'breath', 'heartbeat', 'chain']);
+
+// Wind pitch rises slightly with speed — subtle, natural feel
+const WIND_PITCH_RATES = [null, 0.6, 0.8, 1.0, 1.35, 1.7];
+
+// Wind volume fades at low speed — quiet drift, loud sprint
+const WIND_VOL_CURVE = [null, 0.3, 0.5, 0.72, 0.88, 1.0];
+
+// Heartbeat + Breathing: speed 1 clamps to speed-2 rate (0.8) so slow drift doesn't sound bad
+const BODY_RATES = [null, 0.8, 0.8, 1.0, 1.3, 1.6];
+
+// Gravel: subtle pitch rise
+const GRAVEL_PITCH_RATES = [null, 0.92, 0.96, 1.0, 1.06, 1.12];
+
+// Chain: no pitch change — use standard locked rates
+// (removed CHAIN_PITCH_RATES)
+
+// Web Audio context — used for gapless looping via AudioBufferSourceNode
+let audioCtx = null;
+const audioBuffers = {};   // decoded AudioBuffer per track
+const trackNodes = {};     // { src, gain } currently playing
+const trackState = {};
+let isPlaying = false;
+
+let analyser = null;
+
+async function initCtx() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0.75;
+  analyser.connect(audioCtx.destination);
+}
+
+// Fetch + decode an MP3 into an AudioBuffer — uses XHR so it works on file:// protocol
+function loadBuffer(trackId) {
+  return new Promise(resolve => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', 'sounds/' + trackId + '.mp3', true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = () => {
+      audioCtx.decodeAudioData(xhr.response)
+        .then(buf => {
+          audioBuffers[trackId] = buf;
+          const card = document.getElementById('card-' + trackId);
+          const st = document.getElementById('status-' + trackId);
+          if (card) card.classList.add('loaded');
+          if (st) st.textContent = 'Ready';
+          resolve();
+        })
+        .catch(() => resolve());
+    };
+    xhr.onerror = () => {
+      const st = document.getElementById('status-' + trackId);
+      if (st) st.textContent = 'File not found';
+      resolve();
+    };
+    xhr.send();
+  });
+}
+
+function getRate(trackId, speedVal) {
+  if (trackId === 'wind')      return WIND_PITCH_RATES[speedVal];
+  if (trackId === 'gravel')    return GRAVEL_PITCH_RATES[speedVal];
+  if (trackId === 'heartbeat' || trackId === 'breath') return BODY_RATES[speedVal];
+  if (trackId === 'chain')     return 1.0; // no pitch or speed change
+  if (trackId === 'birds')     return 1.0; // no pitch or speed change
+  return PLAYBACK_RATES[speedVal];
+}
+
+function startTrack(trackId) {
+  if (!audioBuffers[trackId] || trackNodes[trackId]) return;
+  const speedVal = parseInt(document.getElementById('speed-slider').value);
+  const state = trackState[trackId];
+
+  const gain = audioCtx.createGain();
+  gain.gain.value = (trackId === 'wind')
+    ? Math.min(1, state.volume * WIND_VOL_CURVE[speedVal] / 0.72)
+    : state.volume;
+  gain.connect(analyser);
+
+  const src = audioCtx.createBufferSource();
+  src.buffer = audioBuffers[trackId];
+  src.loop = true;
+  src.loopStart = 0;
+  // Find last non-silent sample to avoid encoder padding gap
+  const chanData = audioBuffers[trackId].getChannelData(0);
+  let lastSample = chanData.length - 1;
+  while (lastSample > 0 && Math.abs(chanData[lastSample]) < 0.0005) lastSample--;
+  src.loopEnd = (lastSample + 1) / audioBuffers[trackId].sampleRate;
+  src.playbackRate.value = getRate(trackId, speedVal);
+  src.connect(gain);
+  src.start(0);
+  trackNodes[trackId] = { src, gain };
+  document.getElementById('card-' + trackId).classList.add('playing');
+}
+
+function stopTrack(trackId) {
+  if (!trackNodes[trackId]) return;
+  try { trackNodes[trackId].src.stop(); } catch(e) {}
+  trackNodes[trackId] = null;
+  const card = document.getElementById('card-' + trackId);
+  if (card) card.classList.remove('playing');
+}
+
+function applySpeed(v) {
+  TRACKS.forEach(t => {
+    const node = trackNodes[t.id];
+    if (!node) return;
+    const rate = getRate(t.id, v);
+    node.src.playbackRate.setTargetAtTime(rate, audioCtx.currentTime, 0.1);
+    if (t.id === 'wind') {
+      const baseVol = trackState[t.id].volume;
+      node.gain.gain.setTargetAtTime(
+        Math.min(1, baseVol * WIND_VOL_CURVE[v] / 0.72),
+        audioCtx.currentTime, 0.3
+      );
+    }
+  });
+}
+
+function buildCards() {
+  const grid = document.getElementById('tracks-grid');
+  const list = document.getElementById('active-list');
+
+  TRACKS.forEach(t => {
+    trackState[t.id] = { active: false, volume: 0.7 };
+
+    const card = document.createElement('div');
+    card.className = 'track-card';
+    card.id = 'card-' + t.id;
+    card.innerHTML = `
+      <div class="track-top">
+        <div class="track-icon">${t.icon}</div>
+        <button class="track-toggle" id="toggle-${t.id}" aria-label="Toggle ${t.name}"></button>
+      </div>
+      <div class="track-name">${t.name}</div>
+      <div class="track-type">${t.type}</div>
+      <div class="track-status" id="status-${t.id}">Searching...</div>
+      <div class="vol-row">
+        <label>Vol</label>
+        <input type="range" id="vol-${t.id}" min="0" max="1" step="0.05" value="0.7" style="--pct:70%">
+      </div>`;
+    grid.appendChild(card);
+
+    document.getElementById('toggle-' + t.id).addEventListener('click', () => {
+      trackState[t.id].active = !trackState[t.id].active;
+      const on = trackState[t.id].active;
+      card.classList.toggle('active', on);
+      if (isPlaying) { on ? startTrack(t.id) : stopTrack(t.id); }
+      updateActiveList();
+    });
+
+    document.getElementById('vol-' + t.id).addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      e.target.style.setProperty('--pct', (v * 100) + '%');
+      trackState[t.id].volume = v;
+      if (trackNodes[t.id]) {
+        const speedVal = parseInt(document.getElementById('speed-slider').value);
+        const vol = (t.id === 'wind')
+          ? Math.min(1, v * WIND_VOL_CURVE[speedVal] / 0.72)
+          : v;
+        trackNodes[t.id].gain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
+      }
+    });
+
+    const li = document.createElement('li');
+    li.className = 'active-item';
+    li.id = 'li-' + t.id;
+    li.innerHTML = `<span class="active-dot"></span>${t.name}<span style="opacity:0.4;font-size:0.55rem;margin-left:4px"> — ${t.type}</span>`;
+    list.appendChild(li);
+  });
+}
+
+function updateActiveList() {
+  TRACKS.forEach(t => {
+    const li = document.getElementById('li-' + t.id);
+    if (li) li.className = 'active-item' + (trackState[t.id].active ? ' on' : '');
+  });
+}
+
+const speedSlider = document.getElementById('speed-slider');
+speedSlider.addEventListener('input', () => {
+  const v = parseInt(speedSlider.value);
+  speedSlider.style.setProperty('--pct', ((v - 1) / 4 * 100) + '%');
+  document.getElementById('speed-display').textContent = v;
+  document.getElementById('speed-desc').textContent = SPEED_DESCS[v];
+  document.getElementById('speed-riding-text').textContent = RIDING_LABELS[v];
+  applySpeed(v);
+});
+
+document.getElementById('play-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('play-btn');
+  await initCtx();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  // Load any buffers not yet loaded
+  await Promise.all(TRACKS.map(t => audioBuffers[t.id] ? null : loadBuffer(t.id)).filter(Boolean));
+
+  isPlaying = !isPlaying;
+
+  if (isPlaying) {
+    TRACKS.forEach(t => { if (trackState[t.id].active) startTrack(t.id); });
+    applySpeed(parseInt(speedSlider.value));
+    btn.textContent = 'Stop the ride';
+    btn.classList.add('playing');
+    document.getElementById('riding-indicator').classList.add('show');
+  } else {
+    TRACKS.forEach(t => stopTrack(t.id));
+    btn.textContent = 'Start the ride';
+    btn.classList.remove('playing');
+    document.getElementById('riding-indicator').classList.remove('show');
+  }
+});
+
+// Pre-load status indicators using Audio elements — works on file:// protocol
+window.addEventListener('load', () => {
+  TRACKS.forEach(t => {
+    const probe = new Audio('sounds/' + t.id + '.mp3');
+    probe.addEventListener('canplay', () => {
+      const card = document.getElementById('card-' + t.id);
+      const st = document.getElementById('status-' + t.id);
+      if (card) card.classList.add('loaded');
+      if (st) st.textContent = 'Ready';
+    });
+    probe.addEventListener('error', () => {
+      const st = document.getElementById('status-' + t.id);
+      if (st) st.textContent = 'File not found';
+    });
+    probe.load();
+  });
+});
+
+// Waveform — live from analyser
+const canvas = document.getElementById('waveform-canvas');
+const canvasCtx = canvas.getContext('2d');
+
+function drawWave() {
+  requestAnimationFrame(drawWave);
+  const W = canvas.width = canvas.offsetWidth;
+  const H = canvas.height = 70;
+  canvasCtx.clearRect(0, 0, W, H);
+
+  if (!analyser || !isPlaying) {
+    canvasCtx.strokeStyle = 'rgba(26,168,153,0.25)';
+    canvasCtx.lineWidth = 1.5;
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(0, H / 2);
+    canvasCtx.lineTo(W, H / 2);
+    canvasCtx.stroke();
+    return;
+  }
+
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteTimeDomainData(data);
+  canvasCtx.strokeStyle = '#1AA899';
+  canvasCtx.lineWidth = 1.8;
+  canvasCtx.beginPath();
+  const slice = W / data.length;
+  let x = 0;
+  for (let i = 0; i < data.length; i++) {
+    const y = ((data[i] / 128) - 1) * (H / 2) * 2.2 + H / 2;
+    i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y);
+    x += slice;
+  }
+  canvasCtx.stroke();
+}
+
+drawWave();
+buildCards();
+
+// Idle timer — redirect to menu after 3 minutes of no interaction
+let idleTimer = null;
+let countdownTimer = null;
+const IDLE_MS = 3 * 60 * 1000;
+const COUNTDOWN_SECS = 5;
+
+function resetIdle() {
+  clearTimeout(idleTimer);
+  clearInterval(countdownTimer);
+  document.getElementById('idle-overlay').classList.remove('show');
+  idleTimer = setTimeout(showIdleOverlay, IDLE_MS);
+}
+
+function showIdleOverlay() {
+  const overlay = document.getElementById('idle-overlay');
+  const countdown = document.getElementById('idle-countdown');
+  overlay.classList.add('show');
+  let secs = COUNTDOWN_SECS;
+  countdown.textContent = secs;
+  countdownTimer = setInterval(() => {
+    secs--;
+    countdown.textContent = secs;
+    if (secs <= 0) {
+      clearInterval(countdownTimer);
+      window.location.href = 'index.html';
+    }
+  }, 1000);
+}
+
+['mousemove','mousedown','touchstart','keydown','scroll'].forEach(evt =>
+  document.addEventListener(evt, resetIdle, { passive: true })
+);
+resetIdle();
+
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    // Force update on new deploy
+    reg.update();
+  });
+}
+</script>
+</body>
+</html>

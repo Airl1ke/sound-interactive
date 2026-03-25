@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ride Through the Fields</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --yellow: #E8C832;
+    --yellow-deep: #C4A020;
+    --teal: #1AA899;
+    --teal-light: #4DCFC3;
+    --teal-dark: #0D6B63;
+    --ink: #1A1208;
+    --cream: #FAF3DC;
+  }
+
+  body {
+    background: var(--yellow);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  .blob1 {
+    position: fixed;
+    top: 2rem; right: 3rem;
+    width: 140px; height: 140px;
+    background: var(--teal);
+    border-radius: 50%;
+    opacity: 0.85;
+  }
+
+  .blob2 {
+    position: fixed;
+    top: 6rem; right: 9rem;
+    width: 85px; height: 85px;
+    background: var(--teal-light);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+
+  .blob3 {
+    position: fixed;
+    bottom: 3rem; left: 2rem;
+    width: 100px; height: 100px;
+    background: var(--teal);
+    border-radius: 50%;
+    opacity: 0.25;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 12vw, 8rem);
+    line-height: 0.88;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    margin-bottom: 1rem;
+  }
+
+  h1 span { color: var(--teal); }
+
+  .prompt {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    margin-bottom: 3rem;
+    font-weight: 700;
+  }
+
+  .lang-btns {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .lang-btn {
+    display: block;
+    text-decoration: none;
+    background: var(--ink);
+    color: var(--yellow);
+    border-radius: 4px;
+    padding: 1.5rem 3rem;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .lang-btn:hover { background: var(--teal-dark); }
+  .lang-btn:active { transform: scale(0.97); }
+
+  .lang-btn .lang-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 0.1em;
+    display: block;
+    line-height: 1;
+  }
+
+  .lang-btn .lang-sub {
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal-light);
+    display: block;
+    margin-top: 0.4rem;
+  }
+
+  .lang-btn.zh .lang-name {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+  }
+</style>
+</head>
+<body>
+  <div class="blob1"></div>
+  <div class="blob2"></div>
+  <div class="blob3"></div>
+
+  <div class="container">
+    <h1>Ride<br>Through<br><span>The Fields</span></h1>
+    <p class="prompt">Select your language &nbsp;/&nbsp; 选择语言</p>
+    <div class="lang-btns">
+      <a href="bike-ride-mixer.html" class="lang-btn en">
+        <span class="lang-name">English</span>
+        <span class="lang-sub">Continue in English</span>
+      </a>
+      <a href="bike-ride-mixer-zh.html" class="lang-btn zh">
+        <span class="lang-name">中文</span>
+        <span class="lang-sub">以中文继续</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
