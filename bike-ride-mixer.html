@@ -568,6 +568,61 @@
     min-height: 1em;
   }
 
+  .music-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .music-stop-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--cream);
+    border: none;
+    border-radius: 4px;
+    padding: 0.85rem 1.5rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: none;
+  }
+
+  .music-stop-btn.visible { display: inline-block; }
+  .music-stop-btn:hover { background: rgba(255,255,255,0.2); }
+  .music-stop-btn:active { transform: scale(0.97); }
+
+  .music-vol-row {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+
+  .music-vol-row.visible { display: flex; }
+
+  .music-vol-row label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--yellow-deep);
+    white-space: nowrap;
+  }
+
+  .music-vol-row input[type=range] {
+    height: 4px;
+    margin: 0;
+    flex: 1;
+    background: linear-gradient(to right, var(--rust) var(--pct,70%), rgba(255,255,255,0.15) var(--pct,70%));
+  }
+
+  .music-vol-row input[type=range]::-webkit-slider-thumb {
+    width: 14px; height: 14px;
+    border: 2px solid var(--rust);
+    background: var(--yellow);
+  }
+
   .home-btn {
     position: fixed;
     bottom: 1.5rem;
@@ -664,8 +719,15 @@
       <div class="music-label">Background Music</div>
       <div class="music-desc">A random track plays to set the mood. Sit with it a moment before shifting.</div>
       <div class="music-now-playing hidden" id="music-now-playing"></div>
-      <button class="music-btn" id="music-btn" onclick="startMusic()">Play Music</button>
+      <div class="music-controls">
+        <button class="music-btn" id="music-btn" onclick="startMusic()">Play Music</button>
+        <button class="music-stop-btn" id="music-stop-btn" onclick="stopMusic()">Stop Music</button>
+      </div>
       <div class="music-cooldown-text" id="music-cooldown-text"></div>
+      <div class="music-vol-row" id="music-vol-row">
+        <label>Music Vol</label>
+        <input type="range" id="music-vol-slider" min="0" max="1" step="0.05" value="0.7" style="--pct:70%">
+      </div>
     </div>
 
   </div>
@@ -1076,6 +1138,7 @@ let radioSwitchAudio = null;
 let currentMusicIndex = -1;
 let musicStarted = false;
 let shiftCooldown = false;
+let musicVolume = 0.7;
 
 function getRandomMusicIndex() {
   if (MUSIC_TRACKS.length <= 1) return 0;
@@ -1112,7 +1175,7 @@ async function startMusic() {
     musicAudio = new Audio('music/' + track.file);
     musicAudio.volume = 0;
     musicAudio.play().then(() => {
-      fadeIn(musicAudio, 0.5, 1.0);
+      fadeIn(musicAudio, 0.5, musicVolume);
     }).catch(() => {});
 
     const label = document.getElementById('music-now-playing');
@@ -1120,13 +1183,15 @@ async function startMusic() {
     label.classList.remove('hidden');
   }, 2500);
 
-  // Update button
+  // Update button & show controls
   const btn = document.getElementById('music-btn');
   if (!musicStarted) {
     musicStarted = true;
     btn.textContent = 'Shift the mood';
     btn.onclick = shiftMood;
   }
+  document.getElementById('music-stop-btn').classList.add('visible');
+  document.getElementById('music-vol-row').classList.add('visible');
 }
 
 function shiftMood() {
@@ -1179,6 +1244,40 @@ function fadeOut(audio, duration, onDone) {
     }
   }, stepTime);
 }
+
+function stopMusic() {
+  if (!musicAudio || musicAudio.paused) return;
+  const stopBtn = document.getElementById('music-stop-btn');
+  stopBtn.style.opacity = '0.4';
+  stopBtn.style.pointerEvents = 'none';
+  fadeOut(musicAudio, 1.0, () => {
+    musicAudio.pause();
+    musicAudio.currentTime = 0;
+    musicStarted = false;
+    shiftCooldown = false;
+    currentMusicIndex = -1;
+    const btn = document.getElementById('music-btn');
+    btn.textContent = 'Play Music';
+    btn.onclick = startMusic;
+    btn.classList.remove('cooldown');
+    document.getElementById('music-cooldown-text').textContent = '';
+    document.getElementById('music-now-playing').classList.add('hidden');
+    stopBtn.classList.remove('visible');
+    stopBtn.style.opacity = '';
+    stopBtn.style.pointerEvents = '';
+    document.getElementById('music-vol-row').classList.remove('visible');
+  });
+}
+
+// Music volume slider — does NOT affect radio_switch.mp3
+document.getElementById('music-vol-slider').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  e.target.style.setProperty('--pct', (v * 100) + '%');
+  musicVolume = v;
+  if (musicAudio && !musicAudio.paused) {
+    musicAudio.volume = v;
+  }
+});
 
 // Idle timer — redirect to menu after 3 minutes of no interaction
 let idleTimer = null;
