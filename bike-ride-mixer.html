@@ -620,7 +620,7 @@
 <body>
 
 
-<a href="index.html" class="home-btn">Menu</a>
+<a href="./index.html" class="home-btn">Menu</a>
 
 <div id="idle-overlay">
   <p>Returning to menu...</p>
@@ -1204,7 +1204,7 @@ function showIdleOverlay() {
     countdown.textContent = secs;
     if (secs <= 0) {
       clearInterval(countdownTimer);
-      window.location.href = 'index.html';
+      window.location.href = './index.html';
     }
   }, 1000);
 }
