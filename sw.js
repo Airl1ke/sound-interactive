@@ -1,4 +1,4 @@
-const CACHE = 'ride-the-fields-v2';
+const CACHE = 'ride-the-fields-v3';
 
 const CORE_FILES = [
   '/bike-ride-mixer.html',
@@ -18,15 +18,12 @@ const SOUND_FILES = [
 
 const ALL_FILES = [...CORE_FILES, ...SOUND_FILES];
 
-// On install: cache everything
+// On install: cache everything best-effort so install never fails
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE).then(cache => {
-      // Cache core files immediately, sounds best-effort
-      return cache.addAll(CORE_FILES).then(() =>
-        Promise.allSettled(SOUND_FILES.map(f => cache.add(f)))
-      );
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE).then(cache =>
+      Promise.allSettled([...CORE_FILES, ...SOUND_FILES].map(f => cache.add(f)))
+    ).then(() => self.skipWaiting())
   );
 });
 

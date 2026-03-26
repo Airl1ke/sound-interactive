@@ -490,6 +490,84 @@
     .teal-blob-2 { display: none; }
   }
 
+  .music-panel {
+    background: var(--ink);
+    border-radius: 4px;
+    padding: 2rem;
+    margin-top: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .music-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--rust);
+    opacity: 0.15;
+  }
+
+  .music-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    color: var(--yellow);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+
+  .music-desc {
+    font-size: 0.68rem;
+    color: var(--yellow-deep);
+    letter-spacing: 0.08em;
+    margin-bottom: 1.2rem;
+    line-height: 1.6;
+  }
+
+  .music-now-playing {
+    font-size: 0.72rem;
+    color: var(--teal-light);
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem;
+    min-height: 1.4em;
+    transition: opacity 0.3s;
+  }
+
+  .music-now-playing.hidden { opacity: 0; }
+
+  .music-btn {
+    background: var(--rust);
+    color: var(--cream);
+    border: none;
+    border-radius: 4px;
+    padding: 0.85rem 1.5rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, opacity 0.3s;
+    display: inline-block;
+  }
+
+  .music-btn:hover { background: var(--rust-light); }
+  .music-btn:active { transform: scale(0.97); }
+
+  .music-btn.cooldown {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .music-cooldown-text {
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 0.6rem;
+    min-height: 1em;
+  }
+
   .home-btn {
     position: fixed;
     bottom: 1.5rem;
@@ -581,6 +659,14 @@
 
     <div class="tracks-title">Sound tracks</div>
     <div class="tracks-grid" id="tracks-grid"></div>
+
+    <div class="music-panel">
+      <div class="music-label">Background Music</div>
+      <div class="music-desc">A random track plays to set the mood. Sit with it a moment before shifting.</div>
+      <div class="music-now-playing hidden" id="music-now-playing"></div>
+      <button class="music-btn" id="music-btn" onclick="startMusic()">Play Music</button>
+      <div class="music-cooldown-text" id="music-cooldown-text"></div>
+    </div>
 
   </div>
 
@@ -838,27 +924,82 @@ speedSlider.addEventListener('input', () => {
   applySpeed(v);
 });
 
+const FADE_DURATION = 2.0;
+let btnBusy = false;
+
 document.getElementById('play-btn').addEventListener('click', async () => {
+  if (btnBusy) return;
   const btn = document.getElementById('play-btn');
   await initCtx();
   if (audioCtx.state === 'suspended') await audioCtx.resume();
 
-  // Load any buffers not yet loaded
   await Promise.all(TRACKS.map(t => audioBuffers[t.id] ? null : loadBuffer(t.id)).filter(Boolean));
 
-  isPlaying = !isPlaying;
+  if (!isPlaying) {
+    // Fade in
+    isPlaying = true;
+    btnBusy = true;
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = 'Fading in...';
 
-  if (isPlaying) {
-    TRACKS.forEach(t => { if (trackState[t.id].active) startTrack(t.id); });
+    TRACKS.forEach(t => {
+      if (trackState[t.id].active) {
+        startTrack(t.id);
+        if (trackNodes[t.id]) trackNodes[t.id].gain.gain.value = 0;
+      }
+    });
+
+    // Fade all active track gains up
+    const now = audioCtx.currentTime;
+    TRACKS.forEach(t => {
+      if (trackNodes[t.id]) {
+        const speedVal = parseInt(speedSlider.value);
+        const targetVol = (t.id === 'wind')
+          ? Math.min(1, trackState[t.id].volume * WIND_VOL_CURVE[speedVal] / 0.72)
+          : trackState[t.id].volume;
+        trackNodes[t.id].gain.gain.setTargetAtTime(targetVol, now, FADE_DURATION / 4);
+      }
+    });
     applySpeed(parseInt(speedSlider.value));
-    btn.textContent = 'Stop the ride';
-    btn.classList.add('playing');
     document.getElementById('riding-indicator').classList.add('show');
+
+    setTimeout(() => {
+      btnBusy = false;
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+      btn.textContent = 'Stop the ride';
+      btn.classList.add('playing');
+    }, FADE_DURATION * 1000);
+
   } else {
-    TRACKS.forEach(t => stopTrack(t.id));
-    btn.textContent = 'Start the ride';
-    btn.classList.remove('playing');
-    document.getElementById('riding-indicator').classList.remove('show');
+    // Fade out
+    btnBusy = true;
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = 'Fading out...';
+
+    const now = audioCtx.currentTime;
+    TRACKS.forEach(t => {
+      if (trackNodes[t.id]) {
+        trackNodes[t.id].gain.gain.setTargetAtTime(0, now, FADE_DURATION / 4);
+      }
+    });
+
+    setTimeout(() => {
+      TRACKS.forEach(t => stopTrack(t.id));
+      isPlaying = false;
+      btnBusy = false;
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+      btn.textContent = 'Start the ride';
+      btn.classList.remove('playing');
+      document.getElementById('riding-indicator').classList.remove('show');
+    }, FADE_DURATION * 1000);
   }
 });
 
@@ -917,6 +1058,127 @@ function drawWave() {
 
 drawWave();
 buildCards();
+
+// ── Background Music ──
+const MUSIC_TRACKS = [
+  { file: 'Dourado Devagar.mp3', name: 'Dourado Devagar' },
+  { file: 'Endless Golden Sky.mp3', name: 'Endless Golden Sky' },
+  { file: 'Golden and Gone.mp3', name: 'Golden and Gone' },
+  { file: 'Gravity Games.mp3', name: 'Gravity Games' },
+  { file: 'Hazy Between Us.mp3', name: 'Hazy Between Us' },
+  { file: 'Inverted Color Storm.mp3', name: 'Inverted Color Storm' },
+  { file: 'Sunburst Steps.mp3', name: 'Sunburst Steps' },
+  { file: 'Upside-Down Loop.mp3', name: 'Upside-Down Loop' },
+];
+
+let musicAudio = null;
+let radioSwitchAudio = null;
+let currentMusicIndex = -1;
+let musicStarted = false;
+let shiftCooldown = false;
+
+function getRandomMusicIndex() {
+  if (MUSIC_TRACKS.length <= 1) return 0;
+  let idx;
+  do { idx = Math.floor(Math.random() * MUSIC_TRACKS.length); } while (idx === currentMusicIndex);
+  return idx;
+}
+
+async function startMusic() {
+  await initCtx();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  if (!radioSwitchAudio) {
+    radioSwitchAudio = new Audio('music/radio_switch.mp3');
+  }
+
+  const idx = getRandomMusicIndex();
+  currentMusicIndex = idx;
+  const track = MUSIC_TRACKS[idx];
+
+  // Play radio switch sound effect
+  radioSwitchAudio.currentTime = 0;
+  radioSwitchAudio.volume = 0.7;
+  radioSwitchAudio.play().catch(() => {});
+
+  // Fade out current music if any
+  if (musicAudio && !musicAudio.paused) {
+    const old = musicAudio;
+    fadeOut(old, 0.6, () => { old.pause(); });
+  }
+
+  // Start new track after a short delay for the radio switch effect
+  setTimeout(() => {
+    musicAudio = new Audio('music/' + track.file);
+    musicAudio.volume = 0;
+    musicAudio.play().then(() => {
+      fadeIn(musicAudio, 0.5, 1.0);
+    }).catch(() => {});
+
+    const label = document.getElementById('music-now-playing');
+    label.textContent = '\u266B  Now playing: ' + track.name;
+    label.classList.remove('hidden');
+  }, 2500);
+
+  // Update button
+  const btn = document.getElementById('music-btn');
+  if (!musicStarted) {
+    musicStarted = true;
+    btn.textContent = 'Shift the mood';
+    btn.onclick = shiftMood;
+  }
+}
+
+function shiftMood() {
+  if (shiftCooldown) return;
+  startMusic();
+  // Start cooldown
+  shiftCooldown = true;
+  const btn = document.getElementById('music-btn');
+  const coolText = document.getElementById('music-cooldown-text');
+  btn.classList.add('cooldown');
+  let remaining = 15;
+  coolText.textContent = 'Sit with it... ' + remaining + 's';
+  const interval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      shiftCooldown = false;
+      btn.classList.remove('cooldown');
+      coolText.textContent = '';
+    } else {
+      coolText.textContent = 'Sit with it... ' + remaining + 's';
+    }
+  }, 1000);
+}
+
+function fadeIn(audio, duration, targetVol) {
+  const steps = 30;
+  const stepTime = (duration * 1000) / steps;
+  const volStep = targetVol / steps;
+  let step = 0;
+  const iv = setInterval(() => {
+    step++;
+    audio.volume = Math.min(targetVol, volStep * step);
+    if (step >= steps) clearInterval(iv);
+  }, stepTime);
+}
+
+function fadeOut(audio, duration, onDone) {
+  const steps = 30;
+  const stepTime = (duration * 1000) / steps;
+  const startVol = audio.volume;
+  const volStep = startVol / steps;
+  let step = 0;
+  const iv = setInterval(() => {
+    step++;
+    audio.volume = Math.max(0, startVol - volStep * step);
+    if (step >= steps) {
+      clearInterval(iv);
+      if (onDone) onDone();
+    }
+  }, stepTime);
+}
 
 // Idle timer — redirect to menu after 3 minutes of no interaction
 let idleTimer = null;
